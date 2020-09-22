@@ -24,7 +24,7 @@ class ServiceNowConnector {
  * @param {string} options.serviceNowTable - The table target of the ServiceNow table API.
  */
  constructor(options) {
- this.options = options;
+    this.options = options;
  }
  
  /**
@@ -41,58 +41,56 @@ class ServiceNowConnector {
  */
  
 constructUri(serviceNowTable, query = null) {
- let uri = `/api/now/table/${serviceNowTable}`;
- if (query) {
- uri = uri + '?' + query;
- }
- return uri;
+    let uri = `/api/now/table/${serviceNowTable}`;
+    if (query) {
+        uri = uri + '?' + query;
+    }
+    return uri;
 }
  
 isHibernating(response) {
  return response.body.includes('Instance Hibernating page')
- && response.body.includes('<html>')
- && response.statusCode === 200;
+    && response.body.includes('<html>')
+    && response.statusCode === 200;
 }
  
 processRequestResults(error, response, body, callback) {
- let callbackData = null;
- let callbackError = null;
- if (error) {
- console.error('Error present.');
- callbackError = error;
- } else if (!validResponseRegex.test(response.statusCode)) {
- console.error('Bad response code.');
- callbackError = response;
- } else if (this.isHibernating(response)) {
- callbackError = 'Service Now instance is hibernating';
- console.error(processedError);
- } else {
- callbackData = response;
+    let callbackData = null;
+    let callbackError = null;
+    if (error) {
+        console.error('Error present.');
+        callbackError = error;
+    } else if (!validResponseRegex.test(response.statusCode)) {
+        console.error('Bad response code.');
+        callbackError = response;
+    } else if (this.isHibernating(response)) {
+        callbackError = 'Service Now instance is hibernating';
+        console.error(processedError);
+    } else {
+        callbackData = response;
  }
  
  return callback(callbackData, callbackError);
 }
  
 sendRequest(getCallOptions, callback) {
- // Initialize return arguments for callback
- 
  let uri;
  if (getCallOptions.query)
- uri = this.constructUri(getCallOptions.serviceNowTable, getCallOptions.query);
+    uri = this.constructUri(getCallOptions.serviceNowTable, getCallOptions.query);
  else
- uri = this.constructUri(getCallOptions.serviceNowTable);
+    uri = this.constructUri(getCallOptions.serviceNowTable);
  
  const requestOptions = {
- method: getCallOptions.method,  
- auth: {
- user: getCallOptions.username,
- pass: getCallOptions.password,
- },
- baseUrl: getCallOptions.url,
- uri: uri
-    };
+    method: getCallOptions.method,  
+    auth: {
+        user: getCallOptions.username,
+        pass: getCallOptions.password,
+    },
+    baseUrl: getCallOptions.url,
+    uri: uri
+  };
  request(requestOptions, (error, response, body) => {
- this.processRequestResults(error, response, body, (processedResults, processedError) => callback(processedResults, processedError));
+    this.processRequestResults(error, response, body, (processedResults, processedError) => callback(processedResults, processedError));
  });
 }
  
@@ -112,16 +110,16 @@ sendRequest(getCallOptions, callback) {
  */
  
  get(callback) { 
- let getCallOptions= { ...this.options };
- getCallOptions.method = 'GET';
- getCallOptions.query = 'sysparm_limit=1';
- this.sendRequest(getCallOptions, (results, error) => callback(results, error));
+    let getCallOptions= { ...this.options };
+    getCallOptions.method = 'GET';
+    getCallOptions.query = 'sysparm_limit=1';
+    this.sendRequest(getCallOptions, (results, error) => callback(results, error));
  }
  
  post(callback) { 
- let getCallOptions= { ...this.options }; 
- getCallOptions.method = 'POST';
- this.sendRequest(getCallOptions, (results, error) => callback(results, error));
+    let getCallOptions= { ...this.options }; 
+    getCallOptions.method = 'POST';
+    this.sendRequest(getCallOptions, (results, error) => callback(results, error));
  }
  
 }
