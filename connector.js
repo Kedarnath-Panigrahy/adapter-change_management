@@ -1,12 +1,6 @@
 const request = require('request');
 
-// Update this section with your ServiceNow credentials
-const options = {
-  url: 'https://dev91948.service-now.com/',
-  username: 'admin',
-  password: 'Letmein@2',
-  serviceNowTable: 'change_request'
-};
+const validResponseRegex = /(2\d\d)/;
 
 
 /**
@@ -85,79 +79,47 @@ class ServiceNowConnector {
 
   processRequestResults(error, response, body, callback) {
     let callbackData = null;
-    let callbackError = null;  
-
-        if (!isHibernating(response) == 'Instance Hibernating page') {
+    let callbackError = null;
+    if (!this.isHibernating(response) == 'Instance Hibernating page') {
         callbackError = 'Service Now instance is not hibernating';
         console.error(callbackError);
-        } else {
+    } else {
         callbackData = response;
-        }
-        return callback(callbackData, callbackError);
- }
+    }
+    return callback(callbackData, callbackError);
+  }
 
+  sendRequest(callOptions, callback) {
+    // Initialize return arguments for callback
+    let uri;
+    if (callOptions.query)
+        uri = this.constructUri(callOptions.serviceNowTable, callOptions.query);
+    else
+        uri = this.constructUri(callOptions.serviceNowTable);
+        
+    let method;
+    if(callOptions.method == 'GET')
+        method = 'GET';
+    else
+        method = 'POST';
+    
+    const requestOptions = {
+        method: method,
+        auth: {
+        user: callOptions.username,
+        pass: callOptions.password,
+        },
+        baseUrl: callOptions.url,
+        uri: uri,
+    };
+    request(requestOptions, (error, response, body) => {
+        this.processRequestResults(error, response, body, (processedResults, processedError) => callback(processedResults, processedError));
+    });
+  }
 
-/**
- * @function sendRequest
- * @description Builds final options argument for request function
- *   from global const options and parameter callOptions.
- *   Executes request call, then verifies response.
- *
- * @param {object} callOptions - Passed call options.
- * @param {string} callOptions.query - URL query string.
- * @param {string} callOptions.serviceNowTable - The table target of the ServiceNow table API.
- * @param {string} callOptions.method - HTTP API request method.
- * @param {iapCallback} callback - Callback a function.
- * @param {(object|string)} callback.data - The API's response. Will be an object if sunnyday path.
- *   Will be HTML text if hibernating instance.
- * @param {error} callback.error - The error property of callback.
- */
-sendRequest(callOptions, callback) {
-  // Initialize return arguments for callback
-  let uri;
-  if (callOptions.query)
-    uri = constructUri(callOptions.serviceNowTable, callOptions.query);
-  else
-    uri = constructUri(callOptions.serviceNowTable);
-	
-  let method;
-  if(callOptions.method == 'GET')
-	method = 'GET';
-  else
-  method = 'POST';
-  
-  const requestOptions = {
-    method: method,
-    auth: {
-      user: options.username,
-      pass: options.password,
-    },
-    baseUrl: options.url,
-    uri: uri,
-  };
-  
-  request(requestOptions, (error, response, body) => {
-    processRequestResults(error, response, body, (processedResults, processedError) => callback(processedResults, processedError));
-  });
+  post(callOptions, callback) {
+    callOptions.method = 'POST';
+    this.sendRequest(callOptions, (results, error) => callback(results, error));
+  }
 }
-
-/**
- * @function post
- * @description Call the ServiceNow POST API. Sets the API call's method,
- *   then calls sendRequest().
- *
- * @param {object} callOptions - Passed call options.
- * @param {string} callOptions.serviceNowTable - The table target of the ServiceNow table API.
- * @param {iapCallback} callback - Callback a function.
- * @param {(object|string)} callback.data - The API's response. Will be an object if sunnyday path.
- *   Will be HTML text if hibernating instance.
- * @param {error} callback.error - The error property of callback.
- */
-post(callOptions, callback) {
-  callOptions.method = 'POST';
-  sendRequest(callOptions, (results, error) => callback(results, error));
-}
-}
-
-
 module.exports = ServiceNowConnector;
