@@ -165,18 +165,7 @@ healthcheck(callback) {
    *   handles the response.
    */
   postRecord(callback) {
-     this.connector.post((data, error) => {
-        if (error) {
-            console.error(`\nError returned from POST request:\n${JSON.stringify(error)}`);
-        }
-        console.log(`\nResponse returned from POST request:\n${JSON.stringify(data)}`)
-     });
-    /**
-     * Write the body for this function.
-     * The function is a wrapper for this.connector's post() method.
-     * Note how the object was instantiated in the constructor().
-     * post() takes a callback function.
-     */
+     this.connector.post((data, error) => callback(data, error));
   }
 }
 

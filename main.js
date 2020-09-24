@@ -152,7 +152,25 @@ healthcheck(callback) {
    *   handles the response.
    */
   getRecord(callback) {
-    this.connector.get((data, error) => callback(data, error));
+    this.connector.get((data, error) => {
+            if (data && data.body) {
+                const records = JSON.parse(data.body).result;
+                const modifiedRecords = [];
+
+                for (let record of records)
+                    modifiedRecords.push({
+                        change_ticket_number: record.number,
+                        active: record.active,
+                        priority: record.priority,
+                        description: record.description,
+                        work_start: record.work_start,
+                        work_end: record.work_end,
+                        change_ticket_key: record.sys_id
+                    });
+                return callback(modifiedRecords, error);
+            }
+            callback(data, error);
+        });
   }
 
   /**
@@ -166,17 +184,22 @@ healthcheck(callback) {
    */
   postRecord(callback) {
      this.connector.post((data, error) => {
-        if (error) {
-            console.error(`\nError returned from POST request:\n${JSON.stringify(error)}`);
-        }
-        console.log(`\nResponse returned from POST request:\n${JSON.stringify(data)}`)
-     });
-    /**
-     * Write the body for this function.
-     * The function is a wrapper for this.connector's post() method.
-     * Note how the object was instantiated in the constructor().
-     * post() takes a callback function.
-     */
+
+            if (data && data.body) {
+                const record = JSON.parse(data.body).result;
+
+                return callback({
+                    change_ticket_number: record.number,
+                    change_ticket_key: record.sys_id,
+                    active: record.active,
+                    priority: record.priority,
+                    description: record.description,
+                    work_start: record.work_start,
+                    work_end: record.work_end
+                }, error);
+            }
+            callback(data, error);
+        });
   }
 }
 
